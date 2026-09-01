@@ -1,0 +1,290 @@
+#!/system/bin/sh
+
+MOD="/data/adb/modules/twitter_video_parser"
+PARSER="$MOD/bin/parser"
+
+printf 'Content-Type: application/json\r\n'
+printf 'Access-Control-Allow-Origin: *\r\n'
+printf 'Access-Control-Allow-Headers: *\r\n'
+printf 'Access-Control-Allow-Methods: GET,POST,OPTIONS\r\n'
+printf '\r\n'
+
+# OPTIONS
+if [ "$REQUEST_METHOD" = "OPTIONS" ]; then
+    printf '{"success":true}'
+    exit 0
+fi
+
+# =========================================================
+# 读取 POST 数据
+# =========================================================
+
+BODY="$(cat)"
+
+URL="$(printf '%s' "$BODY" | sed 's/^.*url=//')"
+
+if [ -z "$URL" ]; then
+    printf '{"success":false,"error":"缺少 Twitter/X 链接"}'
+    exit 0
+fi
+
+# URL Decode
+URL="$(printf '%s' "$URL" |
+    sed \
+    's/+/ /g;
+     s/%3A/:/gi;
+     s/%2F/\//gi;
+     s/%3F/?/gi;
+     s/%3D/=/gi;
+     s/%26/\&/gi;
+     s/%23/#/gi;
+     s/%25/%/gi')"
+
+# =========================================================
+# 调用原有 parser
+# =========================================================
+
+RESULT="$("$PARSER" "$URL" 2>/dev/null)"
+
+if [ -z "$RESULT" ]; then
+    printf '{"success":false,"error":"解析器没有返回结果"}'
+    exit 0
+fi
+
+# =========================================================
+# 提取所有 video.twimg.com URL
+# =========================================================
+
+URLS="$(printf '%s\n' "$RESULT" |
+    grep -Eo 'https?://video\.twimg\.com/[^ <>"'\''\\]+' |
+    sed 's/&amp;/\&/g' |
+    sort -u)"
+
+if [ -z "$URLS" ]; then
+    printf '{"success":false,"error":"没有找到视频地址"}'
+    exit 0
+fi
+
+# =========================================================
+# 临时文件
+# =========================================================
+
+TMP="/data/local/tmp/twitter_videos_$$"
+SORTED="/data/local/tmp/twitter_videos_sorted_$$"
+
+rm -f "$TMP" "$SORTED"
+
+touch "$TMP"
+
+# =========================================================
+# 解析每一个视频版本
+# =========================================================
+
+printf '%s\n' "$URLS" |
+while IFS= read -r VIDEO_URL
+do
+
+    [ -z "$VIDEO_URL" ] && continue
+
+    # -----------------------------------------------------
+    # 从 URL 任意位置提取：
+    #
+    # 224x400
+    # 320x380
+    # 1280x720
+    # 1920x1080
+    #
+    # 支持：
+    # /vid/224x400/
+    # /vid/avc1/320x380/
+    # /vid/avc1/1920x1080/
+    # -----------------------------------------------------
+
+    SIZE="$(printf '%s\n' "$VIDEO_URL" |
+        grep -Eo '[0-9]+x[0-9]+' |
+        tail -1)"
+
+    if [ -z "$SIZE" ]; then
+        continue
+    fi
+
+    WIDTH="$(printf '%s' "$SIZE" |
+        cut -dx -f1)"
+
+    HEIGHT="$(printf '%s' "$SIZE" |
+        cut -dx -f2)"
+
+    # -----------------------------------------------------
+    # 数值检查
+    # -----------------------------------------------------
+
+    case "$WIDTH" in
+        ''|*[!0-9]*) continue ;;
+    esac
+
+    case "$HEIGHT" in
+        ''|*[!0-9]*) continue ;;
+    esac
+
+    [ "$WIDTH" -le 0 ] && continue
+    [ "$HEIGHT" -le 0 ] && continue
+
+    # -----------------------------------------------------
+    # 清晰度
+    # -----------------------------------------------------
+
+    case "$HEIGHT" in
+        2160)
+            QUALITY="2160p"
+            ;;
+        1440)
+            QUALITY="1440p"
+            ;;
+        1080)
+            QUALITY="1080p"
+            ;;
+        720)
+            QUALITY="720p"
+            ;;
+        576)
+            QUALITY="576p"
+            ;;
+        540)
+            QUALITY="540p"
+            ;;
+        480)
+            QUALITY="480p"
+            ;;
+        360)
+            QUALITY="360p"
+            ;;
+        240)
+            QUALITY="240p"
+            ;;
+        144)
+            QUALITY="144p"
+            ;;
+        *)
+            QUALITY="${HEIGHT}p"
+            ;;
+    esac
+
+    # -----------------------------------------------------
+    # 计算像素数量
+    # -----------------------------------------------------
+
+    AREA=$((WIDTH * HEIGHT))
+
+    # -----------------------------------------------------
+    # URL JSON 转义
+    # -----------------------------------------------------
+
+    ESCAPED_URL="$(printf '%s' "$VIDEO_URL" |
+        sed 's/\\/\\\\/g;s/"/\\"/g')"
+
+    # -----------------------------------------------------
+    # 保存：
+    #
+    # width
+    # height
+    # quality
+    # area
+    # url
+    # -----------------------------------------------------
+
+    printf '%s\t%s\t%s\t%s\t%s\n' \
+        "$WIDTH" \
+        "$HEIGHT" \
+        "$QUALITY" \
+        "$AREA" \
+        "$ESCAPED_URL" >> "$TMP"
+
+done
+
+# =========================================================
+# 检查解析结果
+# =========================================================
+
+if [ ! -s "$TMP" ]; then
+    rm -f "$TMP" "$SORTED"
+
+    printf '{"success":false,"error":"找到视频地址，但无法识别视频分辨率"}'
+    exit 0
+fi
+
+# =========================================================
+# 排序
+#
+# 1. 像素数量从高到低
+# 2. 宽度从高到低
+# 3. 高度从高到低
+# =========================================================
+
+sort \
+    -t "$(printf '\t')" \
+    -k4,4nr \
+    -k1,1nr \
+    -k2,2nr \
+    "$TMP" > "$SORTED"
+
+# =========================================================
+# 相同分辨率去重
+#
+# 例如：
+# 1280x720 URL A
+# 1280x720 URL B
+#
+# 只保留第一个
+# =========================================================
+
+DEDUP="/data/local/tmp/twitter_videos_dedup_$$"
+
+awk -F '\t' '
+{
+    key=$1 "x" $2
+
+    if (!seen[key]++) {
+        print
+    }
+}
+' "$SORTED" > "$DEDUP"
+
+# =========================================================
+# 输出 JSON
+# =========================================================
+
+printf '{"success":true,"videos":['
+
+FIRST=1
+
+while IFS="$(printf '\t')" read -r WIDTH HEIGHT QUALITY AREA ESCAPED_URL
+do
+
+    [ -z "$ESCAPED_URL" ] && continue
+
+    if [ "$FIRST" -eq 1 ]; then
+        FIRST=0
+    else
+        printf ','
+    fi
+
+    printf '{"width":%s,"height":%s,"quality":"%s","url":"%s"}' \
+        "$WIDTH" \
+        "$HEIGHT" \
+        "$QUALITY" \
+        "$ESCAPED_URL"
+
+done < "$DEDUP"
+
+printf ']}'
+
+# =========================================================
+# 清理
+# =========================================================
+
+rm -f \
+    "$TMP" \
+    "$SORTED" \
+    "$DEDUP"
+
+exit 0

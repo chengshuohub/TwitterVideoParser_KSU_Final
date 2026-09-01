@@ -1,0 +1,42 @@
+#!/system/bin/sh
+
+MOD="/data/adb/modules/twitter_video_parser"
+WEB="$MOD/webroot"
+BB="/data/adb/ksu/bin/busybox"
+PIDFILE="$MOD/server.pid"
+PORT=17890
+
+printf 'Content-Type: application/json\r\n'
+printf 'Access-Control-Allow-Origin: *\r\n'
+printf 'Access-Control-Allow-Headers: *\r\n'
+printf '\r\n'
+
+if [ -f "$PIDFILE" ]; then
+    PID="$(cat "$PIDFILE" 2>/dev/null)"
+
+    if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
+        printf '{"success":true,"running":true,"message":"服务已经在运行"}'
+        exit 0
+    fi
+
+    rm -f "$PIDFILE"
+fi
+
+"$BB" httpd \
+    -f \
+    -p "127.0.0.1:$PORT" \
+    -h "$WEB" \
+    >>"$MOD/server.log" 2>&1 &
+
+PID=$!
+
+echo "$PID" >"$PIDFILE"
+
+sleep 1
+
+if kill -0 "$PID" 2>/dev/null; then
+    printf '{"success":true,"running":true,"message":"解析服务已启动"}'
+else
+    rm -f "$PIDFILE"
+    printf '{"success":false,"running":false,"message":"解析服务启动失败"}'
+fi

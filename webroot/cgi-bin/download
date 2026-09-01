@@ -1,0 +1,64 @@
+#!/system/bin/sh
+
+MOD="/data/adb/modules/twitter_video_parser"
+DOWNLOADER="$MOD/bin/downloader"
+DOWNLOAD_DIR="/sdcard/DCIM/Twitter"
+
+mkdir -p "$DOWNLOAD_DIR"
+
+printf 'Content-Type: application/json\r\n'
+printf 'Access-Control-Allow-Origin: *\r\n'
+printf '\r\n'
+
+BODY="$(cat)"
+
+URL="$(printf '%s' "$BODY" |
+    sed -n 's/.*url=\([^&]*\).*/\1/p')"
+
+if [ -z "$URL" ]; then
+    printf '{"success":false,"error":"缺少视频地址"}'
+    exit
+fi
+
+QUALITY="$(printf '%s' "$BODY" |
+    sed -n 's/.*quality=\([^&]*\).*/\1/p')"
+
+URL="$(printf '%s' "$URL" |
+    sed 's/+/ /g;s/%3A/:/g;s/%2F/\//g;s/%3F/?/g;s/%3D/=/g;s/%26/\&/g')"
+
+RESULT="$("$DOWNLOADER" "$URL" 2>&1)"
+
+FILE="$(printf '%s\n' "$RESULT" |
+    sed -n 's/^SUCCESS://p' |
+    head -1)"
+
+# 如果 downloader 使用了自己的目录，把文件移动到 DCIM
+if [ -n "$FILE" ] && [ -f "$FILE" ]; then
+
+    BASENAME="$(basename "$FILE")"
+
+    if [ -n "$QUALITY" ]; then
+        BASENAME="Twitter_${QUALITY}_$(date +%Y%m%d_%H%M%S).mp4"
+    fi
+
+    TARGET="$DOWNLOAD_DIR/$BASENAME"
+
+    if [ "$FILE" != "$TARGET" ]; then
+        mv "$FILE" "$TARGET" 2>/dev/null
+        FILE="$TARGET"
+    fi
+
+    # 通知 Android MediaScanner
+    am broadcast \
+        -a android.intent.action.MEDIA_SCANNER_SCAN_FILE \
+        -d "file://$FILE" >/dev/null 2>&1
+
+    ESC="$(printf '%s' "$FILE" |
+        sed 's/\\/\\\\/g;s/"/\\"/g')"
+
+    printf '{"success":true,"file":"%s","quality":"%s"}' \
+        "$ESC" "$QUALITY"
+else
+    printf '{"success":false,"error":"下载失败","detail":"%s"}' \
+        "$(printf '%s' "$RESULT" | tail -1)"
+fi

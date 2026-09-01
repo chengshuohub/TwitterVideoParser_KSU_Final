@@ -1,0 +1,141 @@
+* {
+box-sizing:border-box;
+}
+
+body {
+margin:0;
+background:#f3f4f6;
+font-family:system-ui,-apple-system,sans-serif;
+color:#171717;
+}
+
+.app {
+max-width:620px;
+margin:auto;
+padding:24px 18px 40px;
+}
+
+h1 {
+margin:0;
+font-size:26px;
+}
+
+.sub {
+color:#777;
+margin:6px 0 20px;
+}
+
+.status-card {
+display:flex;
+align-items:center;
+gap:9px;
+background:white;
+padding:13px;
+border-radius:14px;
+margin-bottom:18px;
+box-shadow:0 2px 10px rgba(0,0,0,.06);
+}
+
+.dot {
+width:11px;
+height:11px;
+border-radius:50%;
+}
+
+.green {
+background:#18a058;
+}
+
+.red {
+background:#e5484d;
+}
+
+.yellow {
+background:#d99b00;
+}
+
+.status-info {
+flex:1;
+}
+
+.status-info small {
+color:#888;
+}
+
+.status-card button {
+border:0;
+border-radius:8px;
+padding:8px 11px;
+background:#eee;
+}
+
+textarea {
+width:100%;
+min-height:120px;
+padding:14px;
+border:1px solid #ccc;
+border-radius:13px;
+background:white;
+font-size:15px;
+resize:vertical;
+outline:none;
+}
+
+.parse {
+width:100%;
+margin-top:10px;
+padding:14px;
+border:0;
+border-radius:11px;
+background:#111;
+color:white;
+font-size:15px;
+}
+
+#message {
+min-height:26px;
+margin-top:14px;
+color:#666;
+}
+
+.title {
+font-weight:600;
+margin-top:12px;
+}
+
+.video {
+background:white;
+margin-top:10px;
+padding:14px;
+border-radius:13px;
+}
+
+.quality {
+font-size:18px;
+font-weight:700;
+}
+
+.dimension {
+color:#777;
+margin-top:3px;
+font-size:13px;
+}
+
+.download {
+width:100%;
+margin-top:10px;
+padding:11px;
+border:0;
+border-radius:9px;
+background:#111;
+color:white;
+}
+
+.save {
+margin-top:25px;
+padding:13px;
+border-radius:12px;
+background:#e8e8e8;
+color:#666;
+font-size:13px;
+}

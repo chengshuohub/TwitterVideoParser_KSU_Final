@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width,initial-scale=1,maximum-scale=1">
+
+<title>推特视频解析</title>
+
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+<h1>推特视频解析</h1>
+
+<div class="sub">
+X / Twitter 视频解析与下载
+</div>
+
+<div class="status-card">
+
+<div id="dot" class="dot red"></div>
+
+<div class="status-info">
+<div id="status">检测中...</div>
+<small id="port">127.0.0.1:17890</small>
+</div>
+
+<button id="startBtn" onclick="startServer()">启动服务</button>
+<button id="stopBtn" onclick="stopServer()">停止服务</button>
+
+</div>
+
+<textarea
+id="url"
+placeholder="输入 X / Twitter 视频链接">
+</textarea>
+
+<button class="parse"
+onclick="parseVideo()">
+开始解析
+</button>
+
+<div id="message"></div>
+
+<div class="title">
+解析结果
+</div>
+
+<div id="results"></div>
+
+<div class="save">
+保存位置<br>
+<b>/sdcard/DCIM/Twitter/</b>
+</div>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>

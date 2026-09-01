@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width,
+initial-scale=1,
+maximum-scale=1">
+
+<title>推特视频解析</title>
+
+<link rel="stylesheet"
+href="style.css">
+
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+
+<div class="logo">X</div>
+
+<div>
+<h1>推特视频解析</h1>
+<p>KernelSU WebUI</p>
+</div>
+
+</header>
+
+
+<div class="card">
+
+<div class="label">
+X / Twitter 视频链接
+</div>
+
+<textarea
+id="url"
+placeholder="https://x.com/.../status/..."></textarea>
+
+
+<div class="buttons">
+
+<button
+id="paste"
+class="secondary">
+一键粘贴
+</button>
+
+<button
+id="parse"
+class="primary">
+开始解析
+</button>
+
+</div>
+
+
+<div
+id="status"
+class="status">
+等待输入链接
+</div>
+
+</div>
+
+
+<div class="card">
+
+<div class="title">
+解析服务
+</div>
+
+<div class="desc">
+
+使用 SaveTwitter 网页进行视频解析。
+
+</div>
+
+<button
+id="open"
+class="secondary full">
+打开 SaveTwitter
+</button>
+
+</div>
+
+
+<div class="card">
+
+<div class="title">
+视频保存目录
+</div>
+
+<div class="path">
+/sdcard/Movies/Twitter/
+</div>
+
+</div>
+
+
+<div class="card">
+
+<div class="title">
+设备信息
+</div>
+
+<pre id="device">检测中...</pre>
+
+</div>
+
+</div>
+
+
+<script src="app.js"></script>
+
+</body>
+</html>

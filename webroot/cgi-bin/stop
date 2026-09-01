@@ -1,0 +1,50 @@
+#!/system/bin/sh
+
+BB="/data/adb/ksu/bin/busybox"
+PORT=17890
+
+printf 'Content-Type: application/json\r\n'
+printf 'Access-Control-Allow-Origin: *\r\n'
+printf 'Access-Control-Allow-Headers: *\r\n'
+printf 'Access-Control-Allow-Methods: GET,POST,OPTIONS\r\n'
+printf '\r\n'
+
+# 获取监听 17890 的 PID
+PIDS="$("$BB" netstat -lntp 2>/dev/null |
+    grep ":$PORT " |
+    sed -n 's/.*LISTEN[[:space:]]*\([0-9][0-9]*\)\/.*/\1/p')"
+
+if [ -z "$PIDS" ]; then
+    rm -f /data/adb/modules/twitter_video_parser/server.pid
+    printf '{"success":true,"running":false,"message":"解析服务已经停止"}'
+    exit 0
+fi
+
+# 精确杀掉所有监听 17890 的进程
+for PID in $PIDS
+do
+    [ -z "$PID" ] && continue
+
+    "$BB" kill -9 "$PID" 2>/dev/null
+    kill -9 "$PID" 2>/dev/null
+done
+
+sleep 2
+
+# 再检查端口
+CHECK="$("$BB" netstat -lntp 2>/dev/null |
+    grep ":$PORT ")"
+
+if [ -z "$CHECK" ]; then
+
+    rm -f /data/adb/modules/twitter_video_parser/server.pid
+
+    printf '{"success":true,"running":false,"message":"解析服务已停止"}'
+
+else
+
+    printf '{"success":false,"running":true,"message":"17890仍在监听","detail":"%s"}' "$CHECK"
+
+fi
+
+exit 0

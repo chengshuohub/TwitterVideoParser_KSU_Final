@@ -1,0 +1,27 @@
+#!/system/bin/sh
+
+URL="$1"
+TMP="/data/local/tmp/tvp_$$.html"
+
+[ -z "$URL" ] && exit 1
+
+/data/adb/ksu/bin/busybox wget -q -O "$TMP" \
+--header="Content-Type: application/x-www-form-urlencoded" \
+--header="X-Requested-With: XMLHttpRequest" \
+--header="Referer: https://savetwitter.net/zh-cn3" \
+--header="Origin: https://savetwitter.net" \
+-U "Mozilla/5.0 (Linux; Android 16; Mobile)" \
+--post-data="q=$URL&lang=zh-cn" \
+https://savetwitter.net/api/ajaxSearch
+
+if [ ! -s "$TMP" ]; then
+    rm -f "$TMP"
+    exit 2
+fi
+
+grep -oE 'https://video\.twimg\.com/[^"\\ ]+\.mp4[^"\\ ]*' "$TMP" |
+sed 's/\\$//' |
+sort -u
+
+rm -f "$TMP"
+exit 0

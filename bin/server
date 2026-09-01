@@ -1,0 +1,12 @@
+#!/system/bin/sh
+
+MOD="/data/adb/modules/twitter_video_parser"
+WEB="$MOD/webroot"
+BB="/data/adb/ksu/bin/busybox"
+
+mkdir -p "$WEB/cgi-bin"
+
+exec "$BB" httpd \
+    -f \
+    -p 127.0.0.1:17890 \
+    -h "$WEB"

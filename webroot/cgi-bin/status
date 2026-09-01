@@ -1,0 +1,28 @@
+#!/system/bin/sh
+
+BB="/data/adb/ksu/bin/busybox"
+API_PORT=17890
+CTRL_PORT=17891
+
+RUNNING=false
+
+# 直接检查解析服务端口
+if "$BB" netstat -lnt 2>/dev/null | grep -q "127.0.0.1:$API_PORT "; then
+    RUNNING=true
+fi
+
+printf 'Content-Type: application/json\r\n'
+printf 'Access-Control-Allow-Origin: *\r\n'
+printf 'Access-Control-Allow-Headers: *\r\n'
+printf 'Access-Control-Allow-Methods: GET,POST,OPTIONS\r\n'
+printf '\r\n'
+
+if [ "$RUNNING" = "true" ]; then
+
+    printf '{"success":true,"running":true,"version":"5.1.1","api_port":17890,"control_port":17891,"download_dir":"/sdcard/DCIM/Twitter"}'
+
+else
+
+    printf '{"success":true,"running":false,"version":"5.1.1","api_port":17890,"control_port":17891,"download_dir":"/sdcard/DCIM/Twitter"}'
+
+fi

@@ -1,0 +1,28 @@
+#!/system/bin/sh
+
+URL="$1"
+DIR="/sdcard/Movies/Twitter"
+
+[ -z "$URL" ] && exit 1
+
+mkdir -p "$DIR"
+
+NAME="Twitter_$(date +%Y%m%d_%H%M%S).mp4"
+
+echo "DOWNLOAD:$NAME"
+
+/data/adb/ksu/bin/busybox wget \
+--no-check-certificate \
+-U "Mozilla/5.0 (Linux; Android 16; Mobile)" \
+-O "$DIR/$NAME" \
+"$URL"
+
+RET=$?
+
+if [ "$RET" = "0" ]; then
+    echo "SUCCESS:$DIR/$NAME"
+else
+    echo "FAILED"
+fi
+
+exit "$RET"
