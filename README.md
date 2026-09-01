@@ -4,6 +4,13 @@
 
 > 本项目主要面向已经获取 Root / KernelSU 权限的 Android 用户。
 
+<img width="1080" height="2316" alt="f5fafd76d9197acac9687a96b1396619" src="https://github.com/user-attachments/assets/a3f42c52-f24c-454e-8a8a-50ff92f378df" />
+
+
+<img width="1080" height="2316" alt="6b8bd275f13851a5372615597693b0c7" src="https://github.com/user-attachments/assets/4055a97c-162f-4d13-9590-4e9b2e5a2523" />
+
+
+
 ## ✨ 功能
 
 * 🎬 Twitter / X 视频解析
